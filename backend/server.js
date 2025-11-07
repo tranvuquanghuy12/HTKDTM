@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import fetch from "node-fetch";
 import cors from "cors";
 
-dotenv.config(); // đọc file .env
+
 
 const app = express();
 app.use(cors()); // cho phép frontend React gọi API
