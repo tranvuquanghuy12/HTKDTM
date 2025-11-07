@@ -233,7 +233,7 @@ def upload_avatar():
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(filepath)
 
-    avatar_url = f"http://127.0.0.1:5000/static/uploads/{filename}"
+    avatar_url = f"https://htkdtm.onrender.com/static/uploads/{filename}"
     return jsonify({"success": True, "url": avatar_url})
 
 

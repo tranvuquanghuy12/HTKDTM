@@ -24,7 +24,7 @@ export default function Dashboard({ studentId, studentName }) {
 
   useEffect(() => {
     // API 1: Lấy tiến độ (Tính trung bình 63.7%)
-    axios.get(`http://127.0.0.1:5000/api/progress/${studentId}`).then((res) => {
+    axios.get(`https://htkdtm.onrender.com/api/progress/${studentId}`).then((res) => {
       setProgressData(res.data);
       const avg =
         res.data.reduce((acc, item) => acc + item.progress, 0) / res.data.length;
@@ -34,13 +34,13 @@ export default function Dashboard({ studentId, studentName }) {
     // =========================================================
     // ‼️ SỬA LỖI LOGIC: API /api/insight PHẢI GỬI KÈM studentId
     // =========================================================
-    axios.get(`http://127.0.0.1:5000/api/insight/${studentId}`).then((res) => {
+    axios.get(`https://htkdtm.onrender.com/api/insight/${studentId}`).then((res) => {
       setInsights(res.data.insights);
     });
     // =========================================================
 
     // API 3: Lấy dự đoán
-    axios.get(`http://127.0.0.1:5000/api/predict/${studentId}`).then((res) => {
+    axios.get(`https://htkdtm.onrender.com/api/predict/${studentId}`).then((res) => {
       setPredictions(res.data.predictions);
     });
   }, [studentId]);

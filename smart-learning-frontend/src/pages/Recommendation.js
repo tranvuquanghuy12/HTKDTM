@@ -21,7 +21,7 @@ export default function RecommendationPage({ student }) {
 
       try {
         const res = await axios.get(
-          `http://127.0.0.1:5000/api/recommendation/${student.student_id}`
+          `https://htkdtm.onrender.com/api/recommendation/${student.student_id}`
         );
         
         // ✅ NÂNG CẤP: Đọc 2 khóa mới từ API
