@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios"; 
-import "./CourseVideoPage.css";
+import "./CourseVideoPage.css"; 
 
-// ⚠️ LƯU Ý QUAN TRỌNG:
-// Đã thay link API bằng link Render Python thật của anh
+// ⚠️ Cấu hình Link API (Bắt buộc phải đúng)
 const API_BASE_URL = "https://htkdtm.onrender.com"; 
-
-// Link Bot Node.js (cái này ta dùng sau, nhưng cứ để đây)
+// Link Bot Node.js (dùng cho tích hợp ChatBot sau)
 const CHATBOT_BASE_URL = "https://htkdtm-chatbot1.onrender.com"; 
 
 export default function CourseVideoPage() {
@@ -15,14 +13,13 @@ export default function CourseVideoPage() {
   const navigate = useNavigate();
   const course = state?.course;
 
-  // STATE MỚI để lưu video và trạng thái tải
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [mainVideoId, setMainVideoId] = useState(null); 
 
-  // useEffect để gọi YouTube API ngay khi Component được render
+  // Lấy video theo tên môn học (Tự động chạy khi load trang)
   useEffect(() => {
-    // ⚠️ Đảm bảo course.title được truyền vào từ trang trước (SchedulePage.js)
     if (!course?.title) {
       setLoading(false);
       return;
@@ -30,22 +27,22 @@ export default function CourseVideoPage() {
 
     const fetchVideos = async () => {
       try {
-        const keyword = encodeURIComponent(course.title); 
-        
-        // Gọi API YouTube qua Backend Flask
-        // Lỗi 404 (Không tìm thấy video) hoặc 500 (Lỗi server) sẽ bị bắt ở đây
+        const keyword = encodeURIComponent(course.title + " full course tutorial"); // Thêm từ khóa "tutorial" để tìm video chất lượng hơn
         const response = await axios.get(`${API_BASE_URL}/api/youtube/${keyword}`);
         
-        if (response.data && Array.isArray(response.data)) {
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
           setVideos(response.data);
+          setMainVideoId(response.data[0].videoId); 
         } else {
           setVideos([]);
+          setMainVideoId(null);
         }
         setError(null);
       } catch (err) {
         console.error("Lỗi khi tải video:", err);
-        setError("Không thể tải tài liệu hoặc video tham khảo. Vui lòng kiểm tra API Key!");
-        setVideos([]); // Đảm bảo list video rỗng khi lỗi
+        setError("Không thể tải tài liệu. Kiểm tra API Key và kết nối Render/Vercel.");
+        setVideos([]); 
+        setMainVideoId(null);
       } finally {
         setLoading(false);
       }
@@ -54,89 +51,103 @@ export default function CourseVideoPage() {
     fetchVideos();
   }, [course?.title]); 
 
-  // Nếu không có dữ liệu, quay về trang schedule
+  // Fallback UI (Trường hợp lỗi)
   if (!course) {
     return (
-      <div className="video-page-wrapper">
+      <div className="course-video-page-wrapper fallback-message">
         <h2>⚠️ Không tìm thấy thông tin khóa học.</h2>
-        <button className="back-btn" onClick={() => navigate("/schedule")}>
+        <button className="navigate-back-btn" onClick={() => navigate("/schedule")}>
           ← Quay lại các môn đang học
         </button>
       </div>
     );
   }
   
-  // Hiển thị Loading khi đang tải
+  // Loading UI
   if (loading) {
     return (
-      <div className="video-page-container fade-in" style={{ textAlign: 'center', padding: '50px' }}>
-        <h2>Đang tìm kiếm tài liệu cho môn {course.title}...</h2>
-        <p>Vui lòng chờ. (Đang chờ Backend gọi YouTube API)</p>
+      <div className="course-video-page-wrapper loading-state">
+        <div className="spinner"></div>
+        <h2>⏳ Đang tìm kiếm tài liệu cho môn: **{course.title}**...</h2>
+        <p>Vui lòng chờ giây lát để hệ thống tải video từ YouTube.</p>
       </div>
     );
   }
 
-
   return (
-    <div className="video-page-container fade-in">
-      <div className="video-section">
-        <div className="video-header">
-          <h2>Tài liệu tham khảo: {course.title}</h2>
-          <p>
-            *Lưu ý: Bạn đang xem các video liên quan, không phải nội dung khóa học chính thức.
-          </p>
-          {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
-        </div>
+    <div className="course-video-page-container fade-in-section">
+      
+      {/* HEADER SECTION */}
+      <header className="course-header-section">
+        <h1><span role="img" aria-label="books">📘</span> Tài liệu tham khảo: {course.title}</h1>
+        <p className="subtitle">
+          Khám phá các video hướng dẫn chi tiết liên quan đến môn học của bạn.
+        </p>
+        <button className="navigate-back-btn" onClick={() => navigate("/schedule")}>
+          <span role="img" aria-label="back-arrow">←</span> Quay lại
+        </button>
+      </header>
 
-        {/* PHẦN CHÍNH: HIỂN THỊ VIDEO YOUTUBE ĐẦU TIÊN TÌM ĐƯỢC */}
-        <div className="video-player">
-          {videos.length > 0 ? (
-            <iframe
-              width="100%"
-              height="450"
-              // Dùng videoId của video đầu tiên tìm được
-              src={`https://www.youtube.com/embed/${videos[0].videoId}`} 
-              title={`Video tham khảo: ${course.title}`}
-              frameBorder="0"
-              allowFullScreen
-            ></iframe>
+      {/* ERROR MESSAGE */}
+      {error && <div className="error-message error-box">❌ {error}</div>}
+
+
+      <div className="main-content-area">
+        
+        {/* CỘT CHÍNH: VIDEO PLAYER */}
+        <div className="video-player-main-column">
+          {mainVideoId ? (
+            <div className="video-player-box">
+              <iframe
+                width="100%"
+                height="500"
+                src={`https://www.youtube.com/embed/${mainVideoId}`}
+                title={`Video tham khảo: ${course.title}`}
+                frameBorder="0"
+                allowFullScreen
+              ></iframe>
+            </div>
           ) : (
-            <div className="no-video-found">
-              Không tìm thấy video tham khảo nào hoặc API Key chưa được cài đặt.
+             <div className="no-video-found-box">
+              <span role="img" aria-label="magnifying-glass">🔎</span> Không tìm thấy video tham khảo nào cho môn này.
             </div>
           )}
+
+          {/* CHATBOT INTEGRATION SECTION (Giao diện chuẩn bị) */}
+          <div className="chatbot-integration-area">
+              <h3><span role="img" aria-label="robot">🤖</span> Hỏi đáp cùng SmartBot</h3>
+              <p>Bot có thể trả lời các câu hỏi chuyên sâu về môn **{course.title}**.</p>
+              {/* Ở đây anh sẽ nhúng Component ChatBot đã deploy vào */}
+              {/* <Chatbot topic={course.title} apiUrl={`${CHATBOT_BASE_URL}/chat`} /> */}
+          </div>
         </div>
 
-        <button className="back-btn" onClick={() => navigate("/schedule")}>
-          ← Quay lại các môn đang học
-        </button>
-      </div>
 
-      
-      <div className="lesson-section">
-        <h3>📖 Danh sách Video Tham Khảo ({videos.length} video)</h3>
-        
-        {videos.length > 0 ? (
-          <ul className="lesson-list">
-            {videos.map((video, index) => (
-              <li key={index} className="lesson-item video-item-link">
-                <a href={video.url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center' }}>
-                    <img src={video.thumbnail} alt={video.title} style={{ width: '120px', height: 'auto', marginRight: '10px', objectFit: 'cover' }} />
-                    <div style={{ flexGrow: 1 }}>
-                        <strong>{video.title}</strong>
-                        <p style={{ margin: 0, fontSize: '0.9em', color: '#666' }}>Tác giả/Kênh: {video.channelTitle}</p>
-                    </div>
-                </a>
-              </li>
-            ))}
+        {/* CỘT LỀ: DANH SÁCH VIDEO */}
+        <aside className="video-list-sidebar">
+          <h2><span role="img" aria-label="playlist">🎬</span> Đề xuất ({videos.length})</h2>
+          <p className="sidebar-description">Chọn video để xem:</p>
+          
+          <ul className="video-thumbnails-list">
+            {videos.length > 0 ? (
+                videos.map((video, index) => (
+                    <li 
+                      key={index} 
+                      className={`video-list-item ${video.videoId === mainVideoId ? 'active-video' : ''}`}
+                      onClick={() => setMainVideoId(video.videoId)} // Bấm vào là đổi video chính
+                    >
+                        <img src={video.thumbnail} alt={video.title} className="video-thumbnail" />
+                        <div className="video-title-text">
+                            <strong>{video.title}</strong>
+                        </div>
+                    </li>
+                ))
+            ) : (
+                <p>Không có đề xuất video nào.</p>
+            )}
           </ul>
-        ) : (
-          <p>Không có video nào được tìm thấy. Vui lòng kiểm tra Cấu hình hoặc Tên môn học.</p>
-        )}
+        </aside>
       </div>
-
-       {/* TÍCH HỢP CHATBOT (Có thể thêm component sau) */}
-       {/* Ví dụ: <Chatbot topic={course.title} apiUrl={CHATBOT_BASE_URL} /> */}
     </div>
   );
 }
