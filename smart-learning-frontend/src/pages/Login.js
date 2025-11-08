@@ -22,6 +22,7 @@ export default function Login({ onLoginSuccess }) {
 
       if (res.data.success) {
         // Hiệu ứng fade-out trước khi vào Dashboard
+        localStorage.setItem('tlu_token', auth_result.access_token);
         setFadeOut(true);
         setTimeout(() => {
           onLoginSuccess(res.data.student);
