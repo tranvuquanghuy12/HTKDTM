@@ -19,7 +19,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Thêm hoặc sửa lại cấu hình CORS này:
 # CODE CHUẨN ĐÃ SỬA:
-CORS(app, origins=["https://smart-learning-system-ecru.vercel.app"]) # <--- Gửi header "cho phép"
+
 
 if not YOUTUBE_API_KEY:
     print("⚠️ CẢNH BÁO: Thiếu YOUTUBE_API_KEY trong file .env!")
@@ -72,7 +72,7 @@ def init_ai_cache_db():
     conn.close()
     print("✅ Bảng ai_cache đã sẵn sàng.")
 
-
+CORS(app, origins=["https://smart-learning-system-ecru.vercel.app"]) # <--- Gửi header "cho phép"
 YOUTUBE_CACHE_TTL = 86400  # cache 1 ngày (24 giờ)
 
 def get_youtube_cache(query):
